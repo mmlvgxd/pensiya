@@ -20,10 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from os import environ
-from ..constants import CONFIG
 
 from dotenv import load_dotenv
-from ujson import load
 
 
 load_dotenv()
@@ -31,6 +29,3 @@ load_dotenv()
 
 class Config:
     TOKEN: str = environ.get('token')
-
-    with open(CONFIG, 'r') as stream:
-        PREFIX = load(stream)['prefix']
