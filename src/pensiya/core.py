@@ -19,26 +19,32 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from re import search
-from asyncio import TimeoutError
-from .modules.radio import search as _search
 from .modules.config import Config
 from .logger import logger
+from .modules.radio import search
 
-from discord import FFmpegPCMAudio
-from discord.ext import commands
-from discord_ui import UI, SlashOption
-from discord_ui import SelectMenu, SelectOption
+from discord import (
+    Bot,
+    # UI
+    Interaction,
+    SelectOption,
+    # Voice
+    VoiceChannel,
+    VoiceClient,
+    FFmpegPCMAudio,
+    # Embed
+    Embed,
+    Colour
+)
+from discord.ui import Select, View
 
 
-bot = commands.Bot(Config.PREFIX)
-ui = UI(bot)
+bot = Bot(Config.PREFIX)
 
 
-# Events
 @bot.event
 async def on_connect() -> None:
-    logger.info("The bot is connected to the discord")
+    logger.info("The bot is connected to Discord")
 
 
 @bot.event
@@ -46,52 +52,107 @@ async def on_ready() -> None:
     logger.info("The bot is ready to use")
 
 
-# Commands
-@ui.slash.command("ping", "Пинг")
+@bot.command()
 async def ping(ctx) -> None:
     await ctx.respond("pong")
 
 
-@ui.slash.command(
-    "play",
-    "Включить станцию",
-    options=[SlashOption(str, "name", "Название", required=True)],
-)
+@bot.command()
 async def play(ctx, name: str) -> None:
-    placeholder = "Выберите станцию"
+    # Components callback
+    async def selectCallback(interaction: Interaction) -> None:
+        # Radio
+        index: str = select.values[0]
+        station: dict = stations[int(index)]
+        name: str = station["name"]
+        url: str = station["url"]
 
-    channel = ctx.author.voice.channel
+        # I'm lazy
+        name = (
+            name
+            .replace('\n', '')
+            .replace('\t', '')
+        )
 
-    stations = _search(name)
-    _stations = {}
-    options = []
+        # Voice
+        channel: VoiceChannel = ctx.author.voice.channel
+        client: VoiceClient = await channel.connect()
 
-    for station in stations:
-        uuid = station["stationuuid"]
-        name = station["name"]
-        url = station["url"]
+        # If the radio is already playing then restart
+        if client.is_playing():
+            client.stop()
 
-        _stations[uuid] = url
-        options.append(SelectOption(uuid, f"{name} ({uuid})"))
+        client.play(FFmpegPCMAudio(url), after=lambda error: print(error))
+
+        # Embed
+        description = f"✅ Радио включено!\n\n🎶 Сейчас играет `{name}`..."
+
+        # fmt: off
+        embed = Embed(
+            colour=colour,
+            title=title,
+            description=description
+        )
+        # fmt: on
+
+        await interaction.response.send_message(embed=embed)
+
+    stations: list[dict] = search(name)
 
     # fmt: off
-    message = await ctx.send(components=[SelectMenu(
-        options=options, placeholder=placeholder
-    )])
+    select = Select(
+        placeholder="Выберите станцию...",
+        options=[
+            SelectOption(
+                label=station["name"],
+                value=str(stations.index(station)),
+                description=station["stationuuid"]
+            )
+            for station in stations
+        ]
+    )
     # fmt: on
 
-    try:
-        select = await message.wait_for("select", bot, by=ctx.author, timeout=60)
-        content = str([x.content for x in select.selected_options])
-        stationuuid = search(r'\((.*?)\)', content)
+    # Components
+    select.callback = selectCallback
+    view = View(select)
 
-        url = _stations[stationuuid.groups()[0]]
+    # Embed
+    title = "📻 ┊ Радио"
+    description = f"🔎 Нашлось `{len(stations)}`/`10` станций по запросу `{name}`"
 
-        await message.reply('Играет')
+    colour = Colour.from_rgb(188, 172, 155)
 
-        voice = await channel.connect()
-        voice.play(FFmpegPCMAudio(url)) # Не включается
+    # fmt: off
+    embed = Embed(
+        title=title,
+        description=description,
+        colour=colour
+    )
+    # fmt: on
+
+    await ctx.respond(embed=embed, view=view)
 
 
-    except TimeoutError:
-        await message.delete()
+@bot.command()
+async def stop(ctx) -> None:
+    # Voice
+    client: VoiceClient = ctx.voice_client
+
+    await client.stop()
+    await client.disconnect()
+    # Embed
+    title = "📻 ┊ Радио"
+    description = "❌ Радио выключено"
+
+    colour = Colour.from_rgb(188, 172, 155)
+
+    # fmt: off
+    embed = Embed(
+        title=title,
+        description=description,
+        colour=colour
+    )
+    # fmt: on
+
+    await ctx.respond(embed=embed)
