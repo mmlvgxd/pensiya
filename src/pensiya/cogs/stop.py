@@ -19,21 +19,45 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from .modules.config import Config
-from .constants import BOT_STATUS, BOT_ACTIVITY
+from random import choice
+from ..constants import TIPS
+from ..constants import EMBED_STANDART_COLOUR
 
+from discord import ApplicationContext, VoiceClient, Embed
+
+from discord.ext.bridge import bridge_command
 from discord.ext.bridge import Bot
-
-# fmt: off
-bot = Bot(
-    Config.PREFIX,
-    status=BOT_STATUS,
-    activity=BOT_ACTIVITY
-)
-# fmt: on
+from discord.ext.commands import Cog
 
 
-cogs = ["latency", "play", "stop", "events"]
+class Stop(Cog):
+    def __init__(self, bot: Bot) -> None:
+        self.bot = bot
 
-for cog in cogs:
-    bot.load_extension(f"src.pensiya.cogs.{cog}")
+    @bridge_command(description="Выключить радио")
+    async def stop(self, ctx: ApplicationContext) -> None:
+        client: VoiceClient = ctx.voice_client
+
+        if client.is_connected():
+            # Stop music and disconnect from the voice channel
+            client.stop()
+            await client.disconnect()
+
+        # Embed
+        title = "📻 ┊ Радио"
+        description = "❌ Радио выключено!"
+
+        # fmt: off
+        embed = Embed(
+            title=title,
+            description=description,
+            colour=EMBED_STANDART_COLOUR
+        )
+        # fmt: on
+        embed.set_footer(text=f"СОВЕТ: {choice(TIPS)}")
+
+        await ctx.respond(embed=embed)
+
+
+def setup(bot: Bot) -> None:
+    bot.add_cog(Stop(bot))

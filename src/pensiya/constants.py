@@ -19,21 +19,30 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from .modules.config import Config
-from .constants import BOT_STATUS, BOT_ACTIVITY
+from . import __version__
 
-from discord.ext.bridge import Bot
+from discord import Colour
+from discord import Activity
+from discord import ActivityType
+from discord import Status
 
 # fmt: off
-bot = Bot(
-    Config.PREFIX,
-    status=BOT_STATUS,
-    activity=BOT_ACTIVITY
+BOT_ACTIVITY = Activity(
+    name=f"v{__version__}",
+    type=ActivityType.listening
 )
 # fmt: on
+BOT_STATUS = Status.idle
 
+EMBED_STANDART_COLOUR = Colour.from_rgb(188, 172, 155)
 
-cogs = ["latency", "play", "stop", "events"]
+EMBED_ERROR_TITLE = "Ошибка!"
+EMBED_ERROR_COLOUR = Colour.from_rgb(255, 75, 75)
 
-for cog in cogs:
-    bot.load_extension(f"src.pensiya.cogs.{cog}")
+CONFIG_PATH = "./config.json"
+
+TIPS = [
+    "У вас есть 3 минуты на выбор радио-станции",
+    "Вы можете выбрать страну и язык радио-станции",
+    "Перед тем как уйдете не забудьте выключить радио /stop"
+]

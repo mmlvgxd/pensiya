@@ -20,8 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from os import environ
+from ..constants import CONFIG_PATH
 
 from dotenv import load_dotenv
+from orjson import loads
 
 
 load_dotenv()
@@ -29,3 +31,7 @@ load_dotenv()
 
 class Config:
     TOKEN: str = environ.get('token')
+
+    with open(CONFIG_PATH, 'r') as stream:
+        config = loads(stream.read())
+        PREFIX: str = config.get('prefix')

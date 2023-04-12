@@ -1,7 +1,7 @@
 # MIT License
 #
 # Copyright (c) 2023 mmlvgx
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -21,12 +21,16 @@
 # SOFTWARE.
 from os import name
 from .core import bot
+from .alive import alive
 from .modules.config import Config
 
 from uvloop import install
 
 
-if name != 'nt':
+if name != "nt":
     install()
 
-bot.run(Config.TOKEN)
+
+alive()
+
+bot.run(Config.TOKEN, reconnect=True)

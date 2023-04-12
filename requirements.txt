@@ -2,4 +2,8 @@ pycord
 dotenv
 uvloop
 pyradios
+cchardet
+brotlipy
+aiodns
+orjson
 PyNaCl

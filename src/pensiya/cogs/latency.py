@@ -19,21 +19,40 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from .modules.config import Config
-from .constants import BOT_STATUS, BOT_ACTIVITY
+from random import choice
+from ..constants import TIPS
+from ..constants import EMBED_STANDART_COLOUR
 
+from discord import ApplicationContext, Embed
+
+from discord.ext.bridge import bridge_command
 from discord.ext.bridge import Bot
-
-# fmt: off
-bot = Bot(
-    Config.PREFIX,
-    status=BOT_STATUS,
-    activity=BOT_ACTIVITY
-)
-# fmt: on
+from discord.ext.commands import Cog
 
 
-cogs = ["latency", "play", "stop", "events"]
+class Latency(Cog):
+    def __init__(self, bot: Bot) -> None:
+        self.bot = bot
 
-for cog in cogs:
-    bot.load_extension(f"src.pensiya.cogs.{cog}")
+    @bridge_command(description="Посмотреть задержку бота")
+    async def latency(self, ctx: ApplicationContext) -> None:
+        _latency = round(self.bot.latency * 1000)
+
+        # Embed
+        title = "Задержка"
+        description = f"{_latency} миллисекунд"
+
+        # fmt: on
+        embed = Embed(
+            colour=EMBED_STANDART_COLOUR,
+            title=title,
+            description=description
+        )
+        # fmt: off
+        embed.set_footer(text=f"СОВЕТ: {choice(TIPS)}")
+
+        await ctx.respond(embed=embed)
+
+
+def setup(bot: Bot) -> None:
+    bot.add_cog(Latency(bot))

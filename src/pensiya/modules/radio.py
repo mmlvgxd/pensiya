@@ -1,7 +1,7 @@
 # MIT License
 #
 # Copyright (c) 2023 mmlvgx
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -25,5 +25,13 @@ from pyradios import RadioBrowser
 browser = RadioBrowser()
 
 
-def search(name: str) -> None:
-    return browser.search(name=name, limit=10, hidebroken=True)
+def search(name: str, country: str='', language: str='') -> None:
+    # fmt: off
+    return browser.search(
+        name=name,
+        country=country,
+        language=language,
+        limit=10,
+        hidebroken=True
+    )
+    # fmt: on
