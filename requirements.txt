@@ -1,4 +1,4 @@
-pycord
+py-cord
 dotenv
 uvloop
 pyradios
